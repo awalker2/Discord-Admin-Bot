@@ -26,10 +26,10 @@ async def play_audio_in_channel(ctx: commands.context.Context, channel: discord.
         # Play the audio for the duration specified
         ctx.guild.voice_client.play((discord.FFmpegPCMAudio(file)))
         await asyncio.sleep(duration)
-        ctx.guild.voice_client.stop()
 
         # Disconnect when done
         if ctx.guild.voice_client:
+            ctx.guild.voice_client.stop()
             await ctx.guild.voice_client.disconnect()
 
 @bot.event
