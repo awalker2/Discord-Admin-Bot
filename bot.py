@@ -73,12 +73,12 @@ async def discord_jail(ctx: commands.context.Context, name, timeout_time = 60):
     if not member or not member.voice.channel:
         await ctx.send(f'Not so fast there {ctx.author.name}, user has to be in the server and in voice.')
         return
-    
     if discord_jail_members.get(member):
         await ctx.send(f'Not so fast there {ctx.author.name}, user is already in discord jail.')
         return
 
     jail_channel = discord.utils.get(ctx.guild.channels, name="discord-jail")
+    original_channel = member.voice.channel
     if not jail_channel:
         await ctx.send(f"Oh look {ctx.author.name}, we don't have a discord-jail voice channel for punishments, let me make one.")
         jail_channel = await ctx.guild.create_voice_channel("discord-jail", category=member.voice.channel.category)
@@ -94,7 +94,12 @@ async def discord_jail(ctx: commands.context.Context, name, timeout_time = 60):
     if discord_jail_mp3_file:
         await play_audio_in_channel(ctx, jail_channel, discord_jail_mp3_file, timeout_time)
 
-    del discord_jail_members[member]
+    discord_jail_members.pop(member, None)
+
+    try:
+        await member.move_to(original_channel)
+    except Exception:
+        logger.exception("Exception moving user back to original channel:")
 
     await ctx.send(f'{ctx.author.name}, {member.name} is no longer sentenced to discord jail.')
     await member.send(f"{member.name}, you are no longer sentenced to discord jail in {ctx.guild.name}.")
