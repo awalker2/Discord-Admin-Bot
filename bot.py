@@ -9,12 +9,28 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 token = os.getenv("DISCORD_BOT_TOKEN")
+discord_jail_mp3_file = os.getenv("DISCORD_BOT_MP3_JAIL_FILE")
+discord_jail_members = {}
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-discord_jail_members = {}
+async def play_audio_in_channel(ctx: commands.context.Context, channel: discord.VoiceChannel, file: str, duration: float):
+        # Just start over if already connected to some voice channel
+        if not ctx.guild.voice_client:
+            await channel.connect()
+        else:
+            ctx.guild.voice_client.stop()
+
+        # Play the audio for the duration specified
+        ctx.guild.voice_client.play((discord.FFmpegPCMAudio(file)))
+        await asyncio.sleep(duration)
+        ctx.guild.voice_client.stop()
+
+        # Disconnect when done
+        if ctx.guild.voice_client:
+            await ctx.guild.voice_client.disconnect()
 
 @bot.event
 async def on_ready():
@@ -37,7 +53,9 @@ async def mute_roulette(ctx: commands.context.Context):
     members = []
     for voice_channel in ctx.guild.voice_channels:
         for member in voice_channel.members:
-            members.append(member)
+            # Bot could be in voice playing audio, so do not include in mute roulette
+            if member.name != ctx.author.name:
+                members.append(member)
     if not members:
         await ctx.send(f'No winner! Too bad no one was in voice to play with us')
         return
@@ -55,6 +73,10 @@ async def discord_jail(ctx: commands.context.Context, name, timeout_time = 60):
     if not member or not member.voice.channel:
         await ctx.send(f'Not so fast there {ctx.author.name}, user has to be in the server and in voice.')
         return
+    
+    if discord_jail_members.get(member):
+        await ctx.send(f'Not so fast there {ctx.author.name}, user is already in discord jail.')
+        return
 
     jail_channel = discord.utils.get(ctx.guild.channels, name="discord-jail")
     if not jail_channel:
@@ -65,19 +87,23 @@ async def discord_jail(ctx: commands.context.Context, name, timeout_time = 60):
     await member.send(f"RIP {member.name}, you have been sent to discord-jail in {ctx.guild.name}, you can leave in {timeout_time} seconds.")
     
     # Put the member in jail and wait before removing their role
-    await member.move_to(jail_channel)
     discord_jail_members[member] = jail_channel
-    await asyncio.sleep(timeout_time)
+    await member.move_to(jail_channel)
+    
+    # Play the jail audio if it is available
+    if discord_jail_mp3_file:
+        await play_audio_in_channel(ctx, jail_channel, discord_jail_mp3_file, timeout_time)
+
     del discord_jail_members[member]
 
     await ctx.send(f'{ctx.author.name}, {member.name} is no longer sentenced to discord jail.')
     await member.send(f"{member.name}, you are no longer sentenced to discord jail in {ctx.guild.name}.")
 
-# This is to keep users in discord-jail in the discord-jail channel if they try to join another channel
 @bot.event
+# This is to keep users in discord-jail in the discord-jail channel if they try to join another channel
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     jail_channel = discord_jail_members.get(member)
-    if jail_channel and after.channel != jail_channel:
+    if jail_channel and after.channel and after.channel != jail_channel:
         await member.move_to(jail_channel)
 
 
