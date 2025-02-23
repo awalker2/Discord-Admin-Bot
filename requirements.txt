@@ -1,14 +1,1 @@
-aiohappyeyeballs
-aiohttp
-aiosignal
-attrs
-audioop-lts
-cffi
-discord.py
-frozenlist
-idna
-multidict
-propcache
-pycparser
-PyNaCl
-yarl
+discord.py[voice]
