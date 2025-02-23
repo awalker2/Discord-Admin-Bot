@@ -69,7 +69,7 @@ async def mute_roulette(ctx: commands.context.Context):
 
 
 @bot.command(name="discord-jail", help="Puts a user in discord-jail voice channel, default of 60 seconds")
-async def discord_jail(ctx: commands.context.Context, name, timeout_time = 60):
+async def discord_jail(ctx: commands.context.Context, name: str, timeout_time = 60):
     member = discord.utils.get(ctx.guild.members, name=name)
     if not member or not member.voice.channel:
         await ctx.send(f'Not so fast there {ctx.author.name}, user has to be in the server and in voice.')
@@ -111,6 +111,19 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     jail_channel = discord_jail_members.get(member)
     if jail_channel and after.channel and after.channel != jail_channel:
         await member.move_to(jail_channel)
+
+
+@bot.command(name="ghost-ping", help="Ghost ping a user's DMs")
+async def ping(ctx: commands.context.Context, name: str, count: int = 1):
+    member = discord.utils.get(ctx.guild.members, name=name)
+    if not member:
+        await ctx.send(f'Not so fast there {ctx.author.name}, user has to be in the server.')
+        return
+
+    for x in range(count):
+        message = await member.send(f"👻")
+        await message.delete()
+        await asyncio.sleep(1)
 
 
 @bot.command(name="ping", help="Checks that the bot is up and running")
