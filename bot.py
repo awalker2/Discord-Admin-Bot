@@ -54,13 +54,14 @@ async def mute_roulette(ctx: commands.context.Context):
     for voice_channel in ctx.guild.voice_channels:
         for member in voice_channel.members:
             # Bot could be in voice playing audio, so do not include in mute roulette
-            if member.name != ctx.author.name:
+            if member.name != bot.user.name:
                 members.append(member)
     if not members:
         await ctx.send(f'No winner! Too bad no one was in voice to play with us')
         return
     member = random.choice(members)
     await ctx.send(f"Ding! Ding! Ding! {member.name} wins! Server mute for {wait_time} seconds!")
+    await member.send(f"Ding! Ding! Ding! You win Mute Roulette in {ctx.guild.name}! Server mute for {wait_time} seconds!")
     
     await member.edit(mute=True)
     await asyncio.sleep(wait_time)
