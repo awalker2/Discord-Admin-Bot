@@ -13,6 +13,7 @@ discord_jail_mp3_file = os.getenv("DISCORD_BOT_MP3_JAIL_FILE")
 discord_jail_members = {}
 
 intents = discord.Intents.default()
+intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
