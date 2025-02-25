@@ -5,8 +5,8 @@ import logging
 import random
 import asyncio
 
+handler = discord.utils.setup_logging(level=logging.INFO, root=True)
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 token = os.getenv("DISCORD_BOT_TOKEN")
 discord_jail_mp3_file = os.getenv("DISCORD_BOT_MP3_JAIL_FILE")
@@ -14,6 +14,7 @@ discord_jail_members = {}
 
 intents = discord.Intents.default()
 intents.members = True
+intents.voice_states = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
@@ -132,4 +133,4 @@ async def ping(ctx: commands.context.Context):
     await ctx.send("pong")
 
 
-bot.run(token)
+bot.run(token, log_handler=handler)
